@@ -6,8 +6,23 @@ export default function DebugLobstrPage() {
   const [debugInfo, setDebugInfo] = useState<any>({});
   const [testResult, setTestResult] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
+    // Initial check
+    checkWallets();
+
+    // Re-check after delays to catch slow-loading extensions
+    const timers = [
+      setTimeout(() => checkWallets(), 500),
+      setTimeout(() => checkWallets(), 1000),
+      setTimeout(() => checkWallets(), 2000),
+    ];
+
+    return () => timers.forEach(t => clearTimeout(t));
+  }, []);
+
+  const checkWallets = () => {
     // Check what's available in the window object
     const info: any = {
       hasWindow: typeof window !== 'undefined',
@@ -19,6 +34,7 @@ export default function DebugLobstrPage() {
       isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         typeof navigator !== 'undefined' ? navigator.userAgent : ''
       ),
+      timestamp: new Date().toISOString(),
     };
 
     // Check for Lobstr Vault methods
@@ -33,8 +49,27 @@ export default function DebugLobstrPage() {
       info.lobstrMethods = Object.keys(lobstr).filter(key => typeof lobstr[key] === 'function');
     }
 
+    // Check for Freighter methods
+    if (info.hasFreighter) {
+      const freighter = (window as any).freighterApi;
+      info.freighterMethods = Object.keys(freighter).filter(key => typeof freighter[key] === 'function');
+    }
+
+    // Check ALL window properties that might be wallet-related
+    if (typeof window !== 'undefined') {
+      const allProps = Object.keys(window as any);
+      info.walletLikeProps = allProps.filter(prop => 
+        prop.toLowerCase().includes('wallet') ||
+        prop.toLowerCase().includes('stellar') ||
+        prop.toLowerCase().includes('lobstr') ||
+        prop.toLowerCase().includes('freighter') ||
+        prop.toLowerCase().includes('albedo')
+      );
+    }
+
     setDebugInfo(info);
-  }, []);
+    setIsChecking(false);
+  };
 
   const testLobstrConnection = async () => {
     setIsLoading(true);
@@ -82,9 +117,23 @@ export default function DebugLobstrPage() {
 
         {/* Debug Information */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            System Information
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              System Information
+            </h2>
+            {isChecking && (
+              <span className="text-xs text-gray-500 flex items-center gap-1">
+                <span className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+                Checking...
+              </span>
+            )}
+            <button
+              onClick={checkWallets}
+              className="text-xs text-blue-600 hover:text-blue-700 underline"
+            >
+              Refresh
+            </button>
+          </div>
           <div className="space-y-2 font-mono text-sm">
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Window Available:</span>
@@ -122,7 +171,26 @@ export default function DebugLobstrPage() {
                 {debugInfo.isMobile ? '📱 Yes' : '💻 No'}
               </span>
             </div>
+            {debugInfo.timestamp && (
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500 dark:text-gray-500">Last checked:</span>
+                <span className="text-gray-500 dark:text-gray-500">
+                  {new Date(debugInfo.timestamp).toLocaleTimeString()}
+                </span>
+              </div>
+            )}
           </div>
+
+          {debugInfo.walletLikeProps && debugInfo.walletLikeProps.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Wallet-related Properties Found in Window:
+              </h3>
+              <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded text-xs font-mono max-h-32 overflow-y-auto">
+                {debugInfo.walletLikeProps.join(', ')}
+              </div>
+            </div>
+          )}
 
           {debugInfo.lobstrVaultMethods && (
             <div className="mt-4">
