@@ -4,9 +4,6 @@ import helmet from 'helmet'
 import dotenv from 'dotenv'
 import { errorHandler } from './middleware/errorHandler'
 import { requestLogger } from './middleware/requestLogger'
-import * as Sentry from '@sentry/node'
-import { initSentry } from './config/sentry.config'
-// import { setupSwagger } from './middleware/swagger'
 import { logger } from './utils/logger'
 import { groupsRouter } from './routes/groups'
 import { healthRouter } from './routes/health'
@@ -18,16 +15,18 @@ import { jobsRouter } from './routes/jobs'
 import { gamificationRouter } from './routes/gamification'
 import { goalsRouter } from './routes/goals'
 import { setupSwagger } from './swagger'
-import { apiLimiter, strictLimiter } from './middleware/rateLimiter'
+import { apiLimiter, strictLimiter, createIpLimiter, createUserLimiter } from './middleware/rateLimiter'
+import { createDdosProtector } from './middleware/ddosProtector'
 import { startWorkers, stopWorkers } from './jobs/jobWorkers'
 import { startScheduler, stopScheduler } from './cron/scheduler'
-import { kycRouter } from './routes/kyc' // new KYC routes
+import { kycRouter } from './routes/kyc'
 
 dotenv.config()
 
 const app = express()
 initSentry(app)
 const PORT = process.env.PORT || 3001
+
 // Middleware
 app.use(helmet())
 app.use(
@@ -39,24 +38,25 @@ app.use(
   })
 )
 app.use(requestLogger)
+app.set('trust proxy', 1)
+app.use(createDdosProtector())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use('/api', apiLimiter)
-app.set('trust proxy', 1)
+app.use('/api', createIpLimiter('global'))
 
-// API Documentation
+// API Documentation - Swagger UI
 setupSwagger(app)
 
 // Routes
 app.use('/health', healthRouter)
-app.use('/api/auth', strictLimiter, authRouter)
-app.use('/api/groups', groupsRouter)
-app.use('/api/webhooks', strictLimiter, webhooksRouter)
-app.use('/api/analytics', analyticsRouter)
+app.use('/api/auth', createIpLimiter('auth'), authRouter)
+app.use('/api/groups', createUserLimiter(), groupsRouter)
+app.use('/api/webhooks', createIpLimiter('auth'), webhooksRouter)
+app.use('/api/analytics', createUserLimiter(), analyticsRouter)
 app.use('/api/email', emailRouter)
 app.use('/api/jobs', jobsRouter)
-app.use('/api/gamification', gamificationRouter)
-app.use('/api/goals', goalsRouter)
+app.use('/api/gamification', createIpLimiter('expensive'), createUserLimiter(), gamificationRouter)
+app.use('/api/goals', createUserLimiter(), goalsRouter)
 app.use('/api/kyc', kycRouter)
 
 // Disputes
