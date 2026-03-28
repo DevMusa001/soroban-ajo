@@ -170,7 +170,7 @@ export default function Dashboard() {
         {/* Groups Content */}
         <div className="animate-fade-in-up" style={{ animationDelay: '250ms' }}>
           {!isLoading && (groups ?? []).length === 0 ? (
-            <EmptyState />
+            <NoGroups onCreateGroup={() => router.push('/groups/create')} />
           ) : viewMode === 'grid' ? (
             <GroupsGrid groups={groups ?? []} isLoading={isLoading} onGroupClick={handleGroupClick} />
           ) : (
