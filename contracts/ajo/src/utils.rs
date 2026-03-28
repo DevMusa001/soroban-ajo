@@ -1,6 +1,6 @@
 use soroban_sdk::{Address, Env, Vec};
 
-use crate::types::{Group, GroupMilestone, MemberAchievement, PayoutOrder, PayoutOrderingStrategy};
+use crate::types::{Group, GroupMilestone, GroupTemplate, MemberAchievement, PayoutOrder, PayoutOrderingStrategy, TemplateConfig};
 use crate::errors::AjoError;
 
 /// Returns `true` if `address` appears in the group's `members` list.
@@ -514,4 +514,60 @@ pub fn calculate_equivalent_amount(
 /// Returns `true` if `address` is either the complainant or defendant in a dispute.
 pub fn is_dispute_member(dispute: &crate::types::Dispute, address: &Address) -> bool {
     dispute.complainant == *address || dispute.defendant == *address
+}
+
+// ── Group templates ───────────────────────────────────────────────────────
+
+/// Returns the pre-configured [`TemplateConfig`] for the given [`GroupTemplate`].
+///
+/// All duration values are in seconds; all amounts are in stroops
+/// (1 XLM = 10_000_000 stroops).
+pub fn get_template_config(template: GroupTemplate) -> TemplateConfig {
+    match template {
+        GroupTemplate::MonthlySavings => TemplateConfig {
+            template_type: GroupTemplate::MonthlySavings,
+            default_cycle_duration: 2_592_000,       // 30 days
+            default_grace_period: 86_400,             // 1 day
+            default_penalty_rate: 5,
+            suggested_contribution_min: 10_000_000,   // 1 XLM
+            suggested_contribution_max: 1_000_000_000, // 100 XLM
+            suggested_max_members: 12,
+        },
+        GroupTemplate::WeeklySavings => TemplateConfig {
+            template_type: GroupTemplate::WeeklySavings,
+            default_cycle_duration: 604_800,          // 7 days
+            default_grace_period: 43_200,             // 12 hours
+            default_penalty_rate: 10,
+            suggested_contribution_min: 1_000_000,    // 0.1 XLM
+            suggested_contribution_max: 100_000_000,  // 10 XLM
+            suggested_max_members: 10,
+        },
+        GroupTemplate::EmergencyFund => TemplateConfig {
+            template_type: GroupTemplate::EmergencyFund,
+            default_cycle_duration: 1_209_600,        // 14 days
+            default_grace_period: 172_800,            // 2 days
+            default_penalty_rate: 3,
+            suggested_contribution_min: 50_000_000,   // 5 XLM
+            suggested_contribution_max: 5_000_000_000, // 500 XLM
+            suggested_max_members: 8,
+        },
+        GroupTemplate::InvestmentClub => TemplateConfig {
+            template_type: GroupTemplate::InvestmentClub,
+            default_cycle_duration: 7_776_000,         // 90 days
+            default_grace_period: 604_800,             // 7 days
+            default_penalty_rate: 2,
+            suggested_contribution_min: 100_000_000,   // 10 XLM
+            suggested_contribution_max: 10_000_000_000, // 1000 XLM
+            suggested_max_members: 20,
+        },
+        GroupTemplate::Custom => TemplateConfig {
+            template_type: GroupTemplate::Custom,
+            default_cycle_duration: 2_592_000,
+            default_grace_period: 86_400,
+            default_penalty_rate: 5,
+            suggested_contribution_min: 1_000_000,
+            suggested_contribution_max: 10_000_000_000,
+            suggested_max_members: 50,
+        },
+    }
 }

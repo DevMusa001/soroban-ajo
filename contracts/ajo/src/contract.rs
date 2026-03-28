@@ -2484,4 +2484,77 @@ pub fn get_refund_record(
     pub fn get_group_disputes(env: Env, group_id: u64) -> Vec<u64> {
         storage::get_group_dispute_ids(&env, group_id)
     }
+
+    // ── Group templates ───────────────────────────────────────────────────
+
+    /// Create a group using a predefined template.
+    ///
+    /// Applies the template's default cycle duration, grace period, and penalty
+    /// rate while letting the caller choose the contribution amount and member cap.
+    /// The contribution amount must be at least the template's
+    /// `suggested_contribution_min`.
+    ///
+    /// # Arguments
+    /// * `env`                  - The Soroban contract environment
+    /// * `creator`              - Address of the group creator
+    /// * `token_address`        - Token contract address for contributions/payouts
+    /// * `template`             - The [`GroupTemplate`] to apply
+    /// * `contribution_amount`  - Contribution per cycle in stroops (≥ template min)
+    /// * `max_members`          - Maximum members (2–100)
+    ///
+    /// # Returns
+    /// The unique group ID of the newly created group.
+    ///
+    /// # Errors
+    /// * `ContributionAmountZero` – if `contribution_amount` is below the template minimum
+    /// * Standard [`create_group`] errors for invalid parameters
+    pub fn create_group_from_template(
+        env: Env,
+        creator: Address,
+        token_address: Address,
+        template: crate::types::GroupTemplate,
+        contribution_amount: i128,
+        max_members: u32,
+    ) -> Result<u64, AjoError> {
+        let config = utils::get_template_config(template);
+
+        // Enforce template minimum contribution
+        if contribution_amount < config.suggested_contribution_min {
+            return Err(AjoError::ContributionAmountZero);
+        }
+
+        Self::create_group(
+            env,
+            creator,
+            token_address,
+            contribution_amount,
+            config.default_cycle_duration,
+            max_members,
+            config.default_grace_period,
+            config.default_penalty_rate,
+            0, // No insurance by default
+        )
+    }
+
+    /// Return the [`TemplateConfig`] for a given [`GroupTemplate`].
+    ///
+    /// Useful for clients that want to display template defaults before
+    /// asking the user to confirm or customise parameters.
+    pub fn get_template_config(
+        _env: Env,
+        template: crate::types::GroupTemplate,
+    ) -> crate::types::TemplateConfig {
+        utils::get_template_config(template)
+    }
+
+    /// Return all available [`GroupTemplate`] variants.
+    pub fn list_available_templates(env: Env) -> Vec<crate::types::GroupTemplate> {
+        let mut templates = Vec::new(&env);
+        templates.push_back(crate::types::GroupTemplate::MonthlySavings);
+        templates.push_back(crate::types::GroupTemplate::WeeklySavings);
+        templates.push_back(crate::types::GroupTemplate::EmergencyFund);
+        templates.push_back(crate::types::GroupTemplate::InvestmentClub);
+        templates.push_back(crate::types::GroupTemplate::Custom);
+        templates
+    }
 }

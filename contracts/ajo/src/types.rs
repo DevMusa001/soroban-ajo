@@ -666,3 +666,46 @@ pub struct TokenContribution {
 
 /// Maximum number of distinct tokens a multi-token group can accept.
 pub const MAX_ACCEPTED_TOKENS: u32 = 10;
+
+// ── Group templates ───────────────────────────────────────────────────────
+
+/// Predefined group templates for common savings use cases.
+///
+/// Each variant maps to a [`TemplateConfig`] with sensible defaults that
+/// callers can override when creating a group via
+/// [`AjoContract::create_group_from_template`].
+#[contracttype]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u32)]
+pub enum GroupTemplate {
+    /// 30-day cycles, moderate contribution amounts, up to 12 members.
+    MonthlySavings = 0,
+    /// 7-day cycles, smaller contribution amounts, up to 10 members.
+    WeeklySavings = 1,
+    /// 14-day cycles, higher contribution amounts, lower penalty rate.
+    EmergencyFund = 2,
+    /// 90-day cycles, larger contribution amounts, up to 20 members.
+    InvestmentClub = 3,
+    /// Fully customizable — no opinionated defaults beyond the minimums.
+    Custom = 4,
+}
+
+/// Pre-configured defaults and suggested ranges for a [`GroupTemplate`].
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TemplateConfig {
+    /// The template this config belongs to.
+    pub template_type: GroupTemplate,
+    /// Default cycle duration in seconds.
+    pub default_cycle_duration: u64,
+    /// Default grace period in seconds.
+    pub default_grace_period: u64,
+    /// Default penalty rate as a percentage (0–100).
+    pub default_penalty_rate: u32,
+    /// Suggested minimum contribution amount in stroops.
+    pub suggested_contribution_min: i128,
+    /// Suggested maximum contribution amount in stroops.
+    pub suggested_contribution_max: i128,
+    /// Suggested maximum number of members.
+    pub suggested_max_members: u32,
+}
