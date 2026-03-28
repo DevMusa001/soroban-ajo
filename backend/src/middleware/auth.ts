@@ -1,8 +1,9 @@
-import { Request, Response, NextFunction } from 'express'
+import { NextFunction, Request, Response } from 'express'
+
 import { AuthService } from '../services/authService'
 
 export interface AuthRequest extends Request {
-  user?: { publicKey: string }
+  user?: Express.RequestUser
 }
 
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void => {
@@ -17,9 +18,19 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
 
   try {
     const payload = AuthService.verifyToken(token)
-    req.user = { publicKey: payload.publicKey }
+    if (payload.purpose && payload.purpose !== 'auth') {
+      res.status(401).json({ error: 'Invalid token scope' })
+      return
+    }
+
+    req.user = {
+      publicKey: payload.publicKey,
+      walletAddress: payload.publicKey,
+    }
     next()
   } catch (error) {
     res.status(401).json({ error: 'Invalid or expired token' })
   }
 }
+
+export const authenticate = authMiddleware

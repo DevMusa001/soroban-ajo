@@ -5,9 +5,15 @@ import { ThemeProvider } from '@/context/ThemeContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState, useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
-import { observeWebVitals, observeResourceTiming, measurePageLoad } from '@/utils/monitoring'
-import { initGoogleAnalytics, trackWebVital } from '@/utils/googleAnalytics'
-import { initSentryClient } from '@/config/sentry'
+import { useOnboarding } from '@/hooks/useOnboarding'
+
+function OnboardingInitializer() {
+  const startOnboardingIfNew = useOnboarding((s) => s.startOnboardingIfNew)
+  useEffect(() => {
+    startOnboardingIfNew()
+  }, [startOnboardingIfNew])
+  return null
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -45,6 +51,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
+          <OnboardingInitializer />
           {children}
           <Toaster position="top-right" />
         </AuthProvider>
