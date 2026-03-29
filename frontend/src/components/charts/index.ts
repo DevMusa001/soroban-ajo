@@ -1,3 +1,12 @@
 export { ContributionChart } from './ContributionChart'
 export { MemberGrowthChart } from './MemberGrowthChart'
 export { GroupChart } from './GroupChart'
+export { LineChart } from './LineChart'
+export { BarChart } from './BarChart'
+export { PieChart } from './PieChart'
+export { AreaChart } from './AreaChart'
+
+export type { LineChartProps, LineChartSeries, LineChartDataPoint } from './LineChart'
+export type { BarChartProps, BarChartSeries, BarChartDataPoint } from './BarChart'
+export type { PieChartProps, PieChartDataPoint } from './PieChart'
+export type { AreaChartProps, AreaChartSeries, AreaChartDataPoint } from './AreaChart'
