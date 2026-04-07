@@ -11,9 +11,9 @@ import toast from 'react-hot-toast'
 interface GroupFormData {
   groupName: string
   description: string
-  cycleLength: number
-  contributionAmount: number
-  maxMembers: number
+  cycleLength: string | number
+  contributionAmount: string | number
+  maxMembers: string | number
   frequency: 'weekly' | 'monthly'
   duration: number
   invitedMembers: string[]
@@ -38,9 +38,9 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
   const [formData, setFormData] = useState<GroupFormData>({
     groupName: '',
     description: '',
-    cycleLength: 30,
-    contributionAmount: 100,
-    maxMembers: 10,
+    cycleLength: '',
+    contributionAmount: '',
+    maxMembers: '',
     frequency: 'monthly',
     duration: 12,
     invitedMembers: [],
@@ -90,21 +90,27 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
         return undefined
 
       case 'cycleLength':
-        if (!value) return 'Cycle length is required'
-        if (value < 1) return 'Cycle length must be at least 1 day'
-        if (value > 365) return 'Cycle length must not exceed 365 days'
+        const cycleNum = typeof value === 'string' ? parseFloat(value) : value
+        if (!value || value === '') return undefined // Allow empty while typing
+        if (isNaN(cycleNum)) return 'Cycle length must be a number'
+        if (cycleNum < 1) return 'Cycle length must be at least 1 day'
+        if (cycleNum > 365) return 'Cycle length must not exceed 365 days'
         return undefined
 
       case 'contributionAmount':
-        if (!value) return 'Contribution amount is required'
-        if (value <= 0) return 'Contribution amount must be greater than 0'
-        if (value > 1000000) return 'Contribution amount must not exceed 1,000,000'
+        const amountNum = typeof value === 'string' ? parseFloat(value) : value
+        if (!value || value === '') return undefined // Allow empty while typing
+        if (isNaN(amountNum)) return 'Contribution amount must be a number'
+        if (amountNum <= 0) return 'Contribution amount must be greater than 0'
+        if (amountNum > 1000000) return 'Contribution amount must not exceed 1,000,000'
         return undefined
 
       case 'maxMembers':
-        if (!value) return 'Max members is required'
-        if (value < 2) return 'Group must allow at least 2 members'
-        if (value > 50) return 'Group cannot exceed 50 members'
+        const membersNum = typeof value === 'string' ? parseInt(value) : value
+        if (!value || value === '') return undefined // Allow empty while typing
+        if (isNaN(membersNum)) return 'Max members must be a number'
+        if (membersNum < 2) return 'Group must allow at least 2 members'
+        if (membersNum > 50) return 'Group cannot exceed 50 members'
         return undefined
 
       default:
@@ -122,23 +128,15 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     
-    let processedValue: string | number = value
-    
-    // Handle numeric fields
-    if (name === 'cycleLength' || name === 'contributionAmount' || name === 'maxMembers') {
-      const numValue = parseFloat(value)
-      processedValue = isNaN(numValue) ? 0 : numValue
-    }
-    
     setFormData({
       ...formData,
-      [name]: processedValue,
+      [name]: value,
     })
 
-    // Clear error if field was touched and now has valid input
-    if (touched[name]) {
-      const error = validateField(name, processedValue)
-      setErrors({ ...errors, [name]: error })
+    // Only clear errors if field was touched, don't validate while typing
+    if (touched[name] && errors[name]) {
+      // Clear the error if user is typing
+      setErrors({ ...errors, [name]: undefined })
     }
   }
 
@@ -183,9 +181,9 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
       // Call create_group on Soroban contract
       const result = await createGroupMutation.mutateAsync({
         groupName: formData.groupName,
-        cycleLength: formData.cycleLength,
-        contributionAmount: formData.contributionAmount,
-        maxMembers: formData.maxMembers,
+        cycleLength: typeof formData.cycleLength === 'string' ? parseInt(formData.cycleLength) : formData.cycleLength,
+        contributionAmount: typeof formData.contributionAmount === 'string' ? parseFloat(formData.contributionAmount) : formData.contributionAmount,
+        maxMembers: typeof formData.maxMembers === 'string' ? parseInt(formData.maxMembers) : formData.maxMembers,
       })
       
       // Clear draft on success
@@ -246,7 +244,7 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
             onChange={handleChange}
             onBlur={handleBlur}
             placeholder="e.g., Market Women Ajo"
-            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
+            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-gray-900 bg-white ${
               touched.groupName && errors.groupName ? 'border-red-500' : 'border-gray-300'
             }`}
             aria-required="true"
@@ -273,7 +271,7 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
             onChange={handleChange}
             onBlur={handleBlur}
             placeholder="Describe your group's purpose..."
-            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
+            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-gray-900 bg-white ${
               touched.description && errors.description ? 'border-red-500' : 'border-gray-300'
             }`}
             rows={3}
@@ -300,7 +298,7 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
               value={formData.cycleLength}
               onChange={handleChange}
               onBlur={handleBlur}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-gray-900 bg-white ${
                 touched.cycleLength && errors.cycleLength ? 'border-red-500' : 'border-gray-300'
               }`}
               min="1"
@@ -329,7 +327,7 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
               value={formData.contributionAmount}
               onChange={handleChange}
               onBlur={handleBlur}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-gray-900 bg-white ${
                 touched.contributionAmount && errors.contributionAmount ? 'border-red-500' : 'border-gray-300'
               }`}
               min="0"
@@ -359,7 +357,7 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
             value={formData.maxMembers}
             onChange={handleChange}
             onBlur={handleBlur}
-            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
+            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-gray-900 bg-white ${
               touched.maxMembers && errors.maxMembers ? 'border-red-500' : 'border-gray-300'
             }`}
             min="2"
@@ -388,7 +386,7 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
               onChange={(e) =>
                 setFormData({ ...formData, frequency: e.target.value as 'weekly' | 'monthly' })
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
               required
             >
               <option value="weekly">Weekly</option>
@@ -406,7 +404,7 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
               value={formData.duration}
               onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
               min="1"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
               required
             />
           </div>
@@ -425,7 +423,7 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
               onChange={(e) => setMemberInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddMember())}
               placeholder="Enter wallet address or email"
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
             />
             <button
               type="button"
@@ -471,11 +469,13 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
             </div>
             <div>
               <span className="text-gray-600">Contribution:</span>
-              <p className="font-medium text-gray-900 mt-1">${formData.contributionAmount}</p>
+              <p className="font-medium text-gray-900 mt-1">
+                {formData.contributionAmount ? `$${formData.contributionAmount}` : '—'}
+              </p>
             </div>
             <div>
               <span className="text-gray-600">Max Members:</span>
-              <p className="font-medium text-gray-900 mt-1">{formData.maxMembers}</p>
+              <p className="font-medium text-gray-900 mt-1">{formData.maxMembers || '—'}</p>
             </div>
             <div>
               <span className="text-gray-600">Duration:</span>

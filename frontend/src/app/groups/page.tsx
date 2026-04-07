@@ -7,12 +7,19 @@ import { useState } from 'react'
 import { SearchBar } from '@/components/SearchBar'
 import { FilterPanel } from '@/components/FilterPanel'
 import { useGroupFilters } from '@/hooks/useGroupFilters'
+import { useWallet } from '@/hooks/useWallet'
 
 export default function GroupsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const { groups: rawGroups, isLoading } = useDashboard()
+  const { address } = useWallet()
+  const { groups: rawGroups, isLoading } = useDashboard(address)
 
   const { filters, updateFilter, clearFilters, filteredAndSortedGroups } = useGroupFilters(rawGroups);
+
+  const handleGroupCreated = () => {
+    setShowCreateForm(false)
+    // The cache will be automatically invalidated by the mutation
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -45,7 +52,7 @@ export default function GroupsPage() {
         </div>
 
         {showCreateForm ? (
-          <GroupCreationForm onSuccess={() => setShowCreateForm(false)} />
+          <GroupCreationForm onSuccess={handleGroupCreated} />
         ) : (
           <div className="space-y-4">
             <div className="flex flex-col gap-4 mb-4">

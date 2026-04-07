@@ -216,6 +216,8 @@ export class SorobanService {
     const networkPassphrase = process.env.SOROBAN_NETWORK_PASSPHRASE || StellarSdk.Networks.TESTNET
     const rpcUrl = process.env.SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org'
 
+    this.contractId = contractId
+    this.networkPassphrase = networkPassphrase
     this.server = new StellarSdk.SorobanRpc.Server(rpcUrl)
     this.contract = new StellarSdk.Contract(this.contractId)
 

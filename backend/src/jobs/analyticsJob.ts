@@ -1,6 +1,6 @@
 import { Job } from 'bullmq'
 import { logger } from '../utils/logger'
-import { processAnalyticsETL } from './analyticsETL'
+// import { processAnalyticsETL } from './analyticsETL' // Temporarily disabled
 
 export interface AnalyticsJobData {
     type: 'hourly_aggregation' | 'cleanup' | 'hourly_etl' | 'daily_etl' | 'cohort_analysis' | 'metrics_update'
@@ -24,7 +24,8 @@ export async function processAnalyticsJob(job: Job<AnalyticsJobData>): Promise<v
                     eventTypes: stats.eventsByType.length,
                 })
                 // Also run the hourly ETL to update user/group metrics
-                await processAnalyticsETL({ ...job, data: { type: 'hourly_etl' } } as Job<any>)
+                // await processAnalyticsETL({ ...job, data: { type: 'hourly_etl' } } as Job<any>)
+                // Temporarily disabled
                 break
             }
 
@@ -32,7 +33,9 @@ export async function processAnalyticsJob(job: Job<AnalyticsJobData>): Promise<v
             case 'daily_etl':
             case 'cohort_analysis':
             case 'metrics_update':
-                await processAnalyticsETL(job as Job<any>)
+                // await processAnalyticsETL(job as Job<any>)
+                // Temporarily disabled
+                logger.info('Analytics ETL temporarily disabled')
                 break
 
             case 'cleanup': {
