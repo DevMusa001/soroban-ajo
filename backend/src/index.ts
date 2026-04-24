@@ -25,6 +25,10 @@ import { startWorkers, stopWorkers } from './jobs/jobWorkers'
 import { startScheduler, stopScheduler } from './cron/scheduler'
 import { chatService } from './services/chatService'
 import { websocketService } from './services/websocketService'
+import { adminRouter } from './routes/admin'
+import { ipBlocklist, ddosProtection } from './middleware/ddosProtection'
+import { requestThrottle } from './middleware/requestThrottle'
+import { publicReadLimiter, analyticsLimiter } from './middleware/rateLimiter'
 
 dotenv.config()
 
@@ -76,6 +80,9 @@ app.use('/api/disputes', disputesRouter)
 // Templates
 import { templatesRouter } from './routes/templates'
 app.use('/api/templates', templatesRouter)
+
+// Admin
+app.use('/api/admin', adminRouter)
 
 // 404 handler
 app.use((req, res) => {
