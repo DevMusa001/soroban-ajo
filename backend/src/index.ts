@@ -2,11 +2,8 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import dotenv from 'dotenv'
-import { initSentry, Sentry } from './config/sentry'
-import { initDatadog } from './config/datadog'
 import { errorHandler } from './middleware/errorHandler'
 import { requestLogger } from './middleware/requestLogger'
-// import { setupSwagger } from './middleware/swagger'
 import { logger } from './utils/logger'
 import { groupsRouter } from './routes/groups'
 import { healthRouter } from './routes/health'
@@ -19,26 +16,19 @@ import { setupSwagger } from './swagger'
 import {
   apiLimiter,
   strictLimiter,
-  groupsWriteLimiter,
   analyticsLimiter,
   publicReadLimiter,
 } from './middleware/rateLimiter'
 import { ddosProtection, ipBlocklist } from './middleware/ddosProtection'
 import { requestThrottle } from './middleware/requestThrottle'
-import { performanceMiddleware } from './middleware/performance'
-import { metricsRouter } from './routes/metrics'
 import { startWorkers, stopWorkers } from './jobs/jobWorkers'
 import { startScheduler, stopScheduler } from './cron/scheduler'
 
 dotenv.config()
 
-// Init Sentry before anything else
-initSentry()
-// Init DataDog APM (no-op if DD_API_KEY not set)
-initDatadog()
-
 const app = express()
 const PORT = process.env.PORT || 3001
+
 // Middleware
 app.use(helmet())
 app.use(cors({
@@ -53,7 +43,6 @@ app.use(ddosProtection)
 app.use(requestThrottle)
 
 app.use(requestLogger)
-app.use(performanceMiddleware)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -71,7 +60,6 @@ app.use('/api/webhooks', strictLimiter, webhooksRouter)
 app.use('/api/analytics', analyticsLimiter, analyticsRouter)
 app.use('/api/email', emailRouter)
 app.use('/api/jobs', strictLimiter, jobsRouter)
-app.use('/api/metrics', metricsRouter)
 
 // 404 handler
 app.use((req, res) => {
@@ -80,9 +68,6 @@ app.use((req, res) => {
     error: 'Not found'
   })
 })
-
-// Sentry error handler (must be before custom error handler)
-app.use(Sentry.expressErrorHandler())
 
 // Error handling
 app.use(errorHandler)
@@ -115,4 +100,3 @@ process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)
 
 export default app
-
