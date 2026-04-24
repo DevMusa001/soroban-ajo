@@ -767,3 +767,53 @@ model PaymentWindow {
   @@index([dueAt])
   @@index([closesAt])
 }
+
+/// Email templates for transactional emails
+model EmailTemplate {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  subject     String
+  htmlContent String
+  textContent String?
+  variables   String[] @default([])
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  deliveries EmailDelivery[]
+
+  @@index([isActive])
+}
+
+/// Tracks email delivery status and metrics
+model EmailDelivery {
+  id              String    @id @default(cuid())
+  templateId      String
+  recipientEmail  String
+  subject         String
+  status          String    @default("pending") // pending | sent | failed | bounced | complained
+  sentAt          DateTime?
+  bouncedAt       DateTime?
+  complaintAt     DateTime?
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  template        EmailTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@index([recipientEmail])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// Tracks unsubscribed emails
+model Unsubscribe {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  reason        String?
+  unsubscribedAt DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([email])
+}
