@@ -17,6 +17,8 @@ export type { Invitation, InvitationDraft, InvitationStatus, InvitationDirection
 
 export { useToast } from './useToast'
 export type { ToastOptions, ToastAction } from './useToast'
+export { useMemberSearch } from './useMemberSearch'
+export type { MemberSearchResult, MemberSearchFilters } from './useMemberSearch'
 
 // Penalty hooks
 export {
