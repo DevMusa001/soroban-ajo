@@ -116,7 +116,7 @@ export function createIpLimiter(tier: keyof ThrottleConfig): RequestHandler {
 export const apiLimiter: RequestHandler = createIpLimiter('api');
 export const strictLimiter: RequestHandler = createIpLimiter('auth');
 export const publicReadLimiter: RequestHandler = createIpLimiter('api');
-export const analyticsLimiter: RequestHandler = createIpLimiter('expensive');
+export const analyticsLimiter: RequestHandler = createIpLimiter('api');
 
 /**
  * User Limiter Factory
