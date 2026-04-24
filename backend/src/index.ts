@@ -5,6 +5,12 @@ import dotenv from 'dotenv'
 import { createServer } from 'http'
 import { errorHandler } from './middleware/errorHandler'
 import { requestLogger } from './middleware/requestLogger'
+import {
+  enhancedLoggingMiddleware,
+  errorLoggingMiddleware,
+  performanceMonitoringMiddleware,
+  requestBodyLoggingMiddleware,
+} from './middleware/enhancedLogging'
 import { logger } from './utils/logger'
 import { groupsRouter } from './routes/groups'
 import { healthRouter } from './routes/health'
@@ -25,6 +31,12 @@ import { startWorkers, stopWorkers } from './jobs/jobWorkers'
 import { startScheduler, stopScheduler } from './cron/scheduler'
 import { chatService } from './services/chatService'
 import { websocketService } from './services/websocketService'
+import { adminRouter } from './routes/admin'
+import { versionsRouter } from './routes/versions'
+import { ipBlocklist, ddosProtection } from './middleware/ddosProtection'
+import { requestThrottle } from './middleware/requestThrottle'
+import { publicReadLimiter, analyticsLimiter } from './middleware/rateLimiter'
+import { apiVersionMiddleware } from './middleware/apiVersion'
 
 dotenv.config()
 
@@ -45,17 +57,24 @@ app.use(ddosProtection)
 app.use(requestThrottle)
 
 app.use(requestLogger)
+app.use(enhancedLoggingMiddleware)
+app.use(performanceMonitoringMiddleware(1000)) // Log requests slower than 1 second
+app.use(requestBodyLoggingMiddleware)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 // Global API rate limit
 app.use('/api', apiLimiter)
 
+// API Versioning middleware - applies to all /api routes
+app.use('/api', apiVersionMiddleware)
+
 // API Documentation
 setupSwagger(app)
 
 // Routes
 app.use('/health', healthRouter)
+app.use('/api/versions', versionsRouter)
 app.use('/api/auth', strictLimiter, authRouter)
 app.use('/api/groups', publicReadLimiter, groupsRouter)
 app.use('/api/webhooks', strictLimiter, webhooksRouter)
@@ -77,6 +96,9 @@ app.use('/api/disputes', disputesRouter)
 import { templatesRouter } from './routes/templates'
 app.use('/api/templates', templatesRouter)
 
+// Admin
+app.use('/api/admin', adminRouter)
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
@@ -86,6 +108,7 @@ app.use((req, res) => {
 })
 
 // Error handling
+app.use(errorLoggingMiddleware)
 app.use(errorHandler)
 
 // Start server and keep reference so we can close it on shutdown
