@@ -11,13 +11,13 @@
 import React, { useId } from 'react'
 import Link from 'next/link'
 import { useNavigation } from '@/hooks/useNavigation'
-import { NotificationBell } from './NotificationBell'
+import NotificationBell from './NotificationBell'
 import { WalletConnector } from './WalletConnector'
 
 interface NavItem {
   href: string
   label: string
-  icon: string          // SVG path d= value
+  icon: string // SVG path d= value
   dataTour?: string
   badge?: number | string
 }
@@ -102,7 +102,9 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({ navItems }) =>
                 className={[
                   'w-5 h-5 flex-shrink-0 transition-transform duration-200',
                   'group-hover:scale-110',
-                  active ? 'text-white' : 'text-surface-500 dark:text-surface-400 group-hover:text-primary-500',
+                  active
+                    ? 'text-white'
+                    : 'text-surface-500 dark:text-surface-400 group-hover:text-primary-500',
                 ].join(' ')}
                 fill="none"
                 stroke="currentColor"

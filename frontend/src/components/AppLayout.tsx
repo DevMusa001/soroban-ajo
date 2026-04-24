@@ -22,6 +22,8 @@ import { ThemeToggle } from './ThemeToggle'
 import { useOnboarding } from '@/hooks/useOnboarding'
 import { GlobalSearch } from './GlobalSearch'
 import { LiveRegion } from './LiveRegion'
+import { WalletConnector } from './WalletConnector'
+import NotificationBell from './NotificationBell'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -91,112 +93,83 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         Skip to navigation
       </a>
 
+      <FloatingSidebar navItems={NAV_ITEMS} />
+
       {/* Header */}
-      <header className="bg-white dark:bg-dark-bg-secondary shadow-sm border-b border-gray-200 dark:border-dark-border sticky top-0 z-50">
+      <header className="bg-white dark:bg-dark-bg-secondary shadow-sm border-b border-gray-200 dark:border-dark-border sticky top-0 z-50 lg:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <Link href="/" className="flex items-center gap-2">
-              <h1 className="text-2xl md:text-3xl font-bold text-blue-600 dark:text-indigo-400">
-                🪙 Ajo
-              </h1>
-              <span className="hidden sm:inline text-gray-600 dark:text-slate-400 text-sm">
-                Decentralized Savings
-              </span>
-            </Link>
+            <div className="flex items-center gap-4">
+              <MobileNav navItems={NAV_ITEMS} />
+              <Link href="/" className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-blue-600 dark:text-indigo-400">🪙 Ajo</h1>
+              </Link>
+            </div>
 
             <div className="flex items-center gap-3">
-              <div className="hidden md:block mr-2">
-                <GlobalSearch />
-              </div>
               <ThemeToggle />
               <NotificationBell />
               <NotificationHistory />
-              <div data-tour="wallet-connect">
-                <WalletConnector />
-              </div>
             </div>
-
-          {/* Navigation */}
-          <nav
-            id="navigation"
-            className="flex gap-1 -mb-px overflow-x-auto"
-            aria-label="Main navigation"
-          >
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  data-tour={link.dataTour}
-                  aria-current={isActive ? 'page' : undefined}
-                  aria-label={link.label}
-                  className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
-                    isActive
-                      ? 'border-blue-600 dark:border-indigo-400 text-blue-600 dark:text-indigo-400'
-                      : 'border-transparent text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 hover:border-gray-300 dark:hover:border-slate-600'
-                  }`}
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d={link.icon}
-                    />
-                  </svg>
-                  <span className="hidden sm:inline">{link.label}</span>
-                </Link>
-              )
-            })}
-          </nav>
-        </div>
+          </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main id="main-content" tabIndex={-1}>
-        {children}
-      </main>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 lg:pl-72">
+        {/* Desktop Top Bar (Hidden on mobile) */}
+        <header className="hidden lg:flex items-center justify-between px-8 py-4 bg-white/80 dark:bg-dark-bg-secondary/80 backdrop-blur-md border-b border-gray-200 dark:border-dark-border sticky top-0 z-30">
+          <div className="flex-1 max-w-xl">
+            <GlobalSearch />
+          </div>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <NotificationBell />
+            <NotificationHistory />
+            <div data-tour="wallet-connect">
+              <WalletConnector />
+            </div>
+          </div>
+        </header>
+
+        <main id="main-content" tabIndex={-1} className="flex-1 p-4 md:p-6 lg:p-8">
+          {children}
+        </main>
+      </div>
 
       {/* Onboarding & Tour */}
       <Onboarding />
-      <ProductTour 
+      <ProductTour
         initialSteps={[
           {
             id: 'wallet',
             target: '[data-tour="wallet-connect"]',
             title: 'Digital Wallet',
-            content: 'Connect your Stellar wallet to start participating in savings groups securely.',
-            position: 'bottom'
+            content:
+              'Connect your Stellar wallet to start participating in savings groups securely.',
+            position: 'bottom',
           },
           {
             id: 'dashboard',
             target: '[data-tour="dashboard"]',
             title: 'Financial Overview',
             content: 'Track your contributions, earnings, and active groups in one place.',
-            position: 'bottom'
+            position: 'bottom',
           },
           {
             id: 'groups',
             target: '[data-tour="groups-list"]',
             title: 'Explore Groups',
             content: 'Find savings groups that match your financial goals and risk profile.',
-            position: 'bottom'
+            position: 'bottom',
           },
           {
             id: 'profile',
             target: '[data-tour="profile"]',
             title: 'Your Account',
             content: 'Manage your personal settings, security preferences, and view your history.',
-            position: 'bottom'
-          }
+            position: 'bottom',
+          },
         ]}
       />
 
@@ -281,10 +254,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               </ul>
             </div>
           </div>
-          </div>
-        </footer>
-      </div>
+        </div>
+      </footer>
       <LiveRegion />
-    
+    </div>
   )
 }
