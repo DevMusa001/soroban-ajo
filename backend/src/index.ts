@@ -115,6 +115,10 @@ app.use('/api/payments', paymentsRouter)
 import { paymentWebhooksRouter } from './routes/paymentWebhooks'
 app.use('/api/webhooks/payments', paymentWebhooksRouter)
 
+// Calendar integration — Issue #619
+import { calendarRouter } from './routes/calendar'
+app.use('/api/calendar', calendarRouter)
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
