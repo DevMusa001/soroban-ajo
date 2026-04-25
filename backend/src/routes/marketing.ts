@@ -1,8 +1,3 @@
-/**
- * Marketing Routes
- * API endpoints for managing newsletters and campaigns.
- */
-
 import { Router } from 'express'
 import { marketingController } from '../controllers/marketingController'
 
@@ -16,6 +11,15 @@ export const marketingRouter = Router()
  *     tags: [Marketing]
  */
 marketingRouter.post('/contacts', marketingController.registerContact)
+
+/**
+ * @swagger
+ * /api/marketing/subscribe:
+ *   post:
+ *     summary: Subscribe a user to the newsletter
+ *     tags: [Marketing]
+ */
+marketingRouter.post('/subscribe', marketingController.registerContact)
 
 /**
  * @swagger

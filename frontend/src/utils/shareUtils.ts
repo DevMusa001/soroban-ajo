@@ -1,4 +1,24 @@
 /**
+ * Track a social share event in the backend.
+ */
+export const trackSocialShare = async (
+  platform: string,
+  contentId: string,
+  contentType: string
+): Promise<void> => {
+  try {
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : 'unknown';
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/share/track`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, platform, contentId, contentType }),
+    });
+  } catch (error) {
+    console.error('Failed to track social share:', error);
+  }
+};
+
+/**
  * Create a unique, deterministic invite code for a group.
  * 
  * @param groupId - The group's identifier
@@ -90,6 +110,7 @@ export const shareViaTwitter = (groupName: string, inviteLink: string): void => 
     '_blank',
     'width=550,height=420'
   );
+  trackSocialShare('twitter', groupName, 'group_invite');
 };
 
 export const shareViaWhatsApp = (groupName: string, inviteLink: string): void => {
@@ -97,6 +118,7 @@ export const shareViaWhatsApp = (groupName: string, inviteLink: string): void =>
     `Join ${groupName} on Ajo!\n\n${inviteLink}\n\nAjo is a decentralized savings group platform.`
   );
   window.open(`https://wa.me/?text=${text}`, '_blank');
+  trackSocialShare('whatsapp', groupName, 'group_invite');
 };
 
 export const shareViaTelegram = (groupName: string, inviteLink: string): void => {
@@ -181,7 +203,7 @@ export const shareContentViaTelegram = (payload: SocialSharePayload): void => {
 export const shareContentViaWebShare = async (
   payload: SocialSharePayload
 ): Promise<boolean> => {
-  if (!navigator.share) {
+  if (typeof navigator === 'undefined' || !navigator.share) {
     return false;
   }
 

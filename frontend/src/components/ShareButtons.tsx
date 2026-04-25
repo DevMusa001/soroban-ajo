@@ -1,39 +1,109 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   shareViaEmail,
   shareViaTwitter,
   shareViaWhatsApp,
   shareViaTelegram,
   shareViaWebShare,
+  trackSocialShare,
+  SocialSharePayload,
 } from '@/utils/shareUtils';
 
 interface ShareButtonsProps {
-  groupName: string;
-  inviteLink: string;
+  groupName?: string;
+  inviteLink?: string;
   email?: string;
+  achievement?: {
+    id: string;
+    name: string;
+    description: string;
+    xp: number;
+  };
+  milestone?: {
+    id: string;
+    label: string;
+    value: number;
+  };
 }
 
 export default function ShareButtons({
   groupName,
   inviteLink,
   email,
+  achievement,
+  milestone,
 }: ShareButtonsProps) {
+  const [isShareSupported, setIsShareSupported] = useState(false);
+
+  useEffect(() => {
+    setIsShareSupported(typeof navigator !== 'undefined' && !!navigator.share);
+  }, []);
+
+  const getShareData = (): { title: string; link: string; payload: SocialSharePayload; id: string; type: string } => {
+    if (achievement) {
+      const link = `${window.location.origin}/achievements/${achievement.id}`;
+      return {
+        title: achievement.name,
+        link,
+        payload: {
+          title: `Achievement unlocked: ${achievement.name}`,
+          text: `I just unlocked "${achievement.name}" and earned ${achievement.xp} XP on Ajo!`,
+          url: link,
+        },
+        id: achievement.id,
+        type: 'achievement',
+      };
+    }
+    if (milestone) {
+      const link = `${window.location.origin}/milestones/${milestone.id}`;
+      return {
+        title: milestone.label,
+        link,
+        payload: {
+          title: `Savings milestone reached: ${milestone.label}`,
+          text: `I just reached the ${milestone.label} savings milestone (${milestone.value} XLM) on Ajo!`,
+          url: link,
+        },
+        id: milestone.id,
+        type: 'milestone',
+      };
+    }
+    return {
+      title: groupName || 'Ajo Group',
+      link: inviteLink || '',
+      payload: {
+        title: `Join ${groupName} on Ajo`,
+        text: `You've been invited to join ${groupName} on Ajo - a decentralized savings group platform!`,
+        url: inviteLink,
+      },
+      id: groupName || 'unknown',
+      type: 'group_invite',
+    };
+  };
+
   const handleWebShare = async () => {
-    const shared = await shareViaWebShare(groupName, inviteLink);
-    if (!shared) {
-      // Fallback if Web Share API not available
-      alert('Web Share API not supported. Use other sharing options.');
+    const { title, link, payload, id, type } = getShareData();
+    const shared = await shareViaWebShare(title, link);
+    if (shared) {
+      trackSocialShare('native', id, type);
     }
   };
+
+  const { title, link, type, id } = getShareData();
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {/* Email */}
       <button
-        onClick={() => shareViaEmail(groupName, inviteLink, email)}
+        onClick={() => {
+          shareViaEmail(title, link, email);
+          trackSocialShare('email', id, type);
+        }}
         className="flex flex-col items-center gap-2 p-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
       >
+        {/* ... email icon ... */}
         <svg
           className="w-6 h-6 text-gray-700 dark:text-gray-300"
           fill="none"
@@ -54,9 +124,13 @@ export default function ShareButtons({
 
       {/* WhatsApp */}
       <button
-        onClick={() => shareViaWhatsApp(groupName, inviteLink)}
+        onClick={() => {
+          shareViaWhatsApp(title, link);
+          trackSocialShare('whatsapp', id, type);
+        }}
         className="flex flex-col items-center gap-2 p-4 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 rounded-lg transition-colors"
       >
+        {/* ... whatsapp icon ... */}
         <svg
           className="w-6 h-6 text-green-600 dark:text-green-400"
           fill="currentColor"
@@ -71,9 +145,13 @@ export default function ShareButtons({
 
       {/* Twitter */}
       <button
-        onClick={() => shareViaTwitter(groupName, inviteLink)}
+        onClick={() => {
+          shareViaTwitter(title, link);
+          trackSocialShare('twitter', id, type);
+        }}
         className="flex flex-col items-center gap-2 p-4 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded-lg transition-colors"
       >
+        {/* ... twitter icon ... */}
         <svg
           className="w-6 h-6 text-blue-500 dark:text-blue-400"
           fill="currentColor"
@@ -88,9 +166,13 @@ export default function ShareButtons({
 
       {/* Telegram */}
       <button
-        onClick={() => shareViaTelegram(groupName, inviteLink)}
+        onClick={() => {
+          shareViaTelegram(title, link);
+          trackSocialShare('telegram', id, type);
+        }}
         className="flex flex-col items-center gap-2 p-4 bg-sky-100 dark:bg-sky-900/30 hover:bg-sky-200 dark:hover:bg-sky-900/50 rounded-lg transition-colors"
       >
+        {/* ... telegram icon ... */}
         <svg
           className="w-6 h-6 text-sky-500 dark:text-sky-400"
           fill="currentColor"
@@ -104,7 +186,7 @@ export default function ShareButtons({
       </button>
 
       {/* Web Share (Mobile) */}
-      {typeof navigator !== 'undefined' && navigator.share && (
+      {isShareSupported && (
         <button
           onClick={handleWebShare}
           className="col-span-2 sm:col-span-4 flex items-center justify-center gap-2 p-4 bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-colors"
