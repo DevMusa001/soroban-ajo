@@ -132,3 +132,64 @@ notificationsRouter.put('/reminders/preferences', async (req: AuthRequest, res: 
     res.status(500).json({ success: false, error: 'Failed to update preferences' })
   }
 })
+
+// ── Web Push subscription management ─────────────────────────────────────
+
+const pushSubSchema = z.object({
+  endpoint: z.string().url(),
+  keys: z.object({
+    p256dh: z.string(),
+    auth: z.string(),
+  }),
+})
+
+/**
+ * GET /api/notifications/push/vapid-public-key
+ * Returns the VAPID public key for the client to use when subscribing.
+ */
+notificationsRouter.get('/push/vapid-public-key', (_req, res: Response) => {
+  const key = process.env.VAPID_PUBLIC_KEY
+  if (!key) return res.status(503).json({ success: false, error: 'Push notifications not configured' })
+  res.json({ success: true, data: { publicKey: key } })
+})
+
+/**
+ * POST /api/notifications/push/subscribe
+ * Saves a Web Push subscription for the authenticated user.
+ */
+notificationsRouter.post('/push/subscribe', async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.walletAddress!
+    const { endpoint, keys } = pushSubSchema.parse(req.body)
+    await prisma.pushSubscription.upsert({
+      where: { endpoint },
+      update: { p256dh: keys.p256dh, auth: keys.auth },
+      create: { userId, endpoint, p256dh: keys.p256dh, auth: keys.auth },
+    })
+    res.json({ success: true })
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: 'Invalid subscription', details: err.errors })
+    }
+    logger.error('Error saving push subscription:', err)
+    res.status(500).json({ success: false, error: 'Failed to save subscription' })
+  }
+})
+
+/**
+ * DELETE /api/notifications/push/unsubscribe
+ * Removes a Web Push subscription by endpoint.
+ */
+notificationsRouter.delete('/push/unsubscribe', async (req: AuthRequest, res: Response) => {
+  try {
+    const { endpoint } = z.object({ endpoint: z.string().url() }).parse(req.body)
+    await prisma.pushSubscription.deleteMany({ where: { endpoint, userId: req.user!.walletAddress! } })
+    res.json({ success: true })
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: 'Invalid request', details: err.errors })
+    }
+    logger.error('Error removing push subscription:', err)
+    res.status(500).json({ success: false, error: 'Failed to remove subscription' })
+  }
+})

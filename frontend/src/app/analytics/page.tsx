@@ -5,6 +5,8 @@ import { Download, FileText, Calendar } from 'lucide-react';
 import { useGroupAnalytics } from '@/hooks/useGroupAnalytics';
 import { SkeletonChart } from '@/components/skeletons';
 import { lazyLoad } from '@/utils/lazyLoad';
+import { ContributionCalendarHeatmap } from '@/components/calendar/ContributionCalendarHeatmap';
+import type { ContributionDay } from '@/utils/calendarHelpers';
 
 const AnalyticsSummaryCards = lazyLoad(
   () => import('@/components/analytics').then((m) => ({ default: m.AnalyticsSummaryCards })),
@@ -160,6 +162,22 @@ export default function AnalyticsDashboard() {
   const { summary, contributionTrends, memberStats, groupPerformance, topContributors } =
     useGroupAnalytics([]);
 
+  // Build contribution days from trend data for the heatmap
+  const heatmapContributions = useMemo<ContributionDay[]>(() => {
+    const today = new Date();
+    const days: ContributionDay[] = [];
+    for (let i = 364; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      // Seed deterministic mock data from date
+      const seed = d.getDate() + d.getMonth() * 31;
+      const count = seed % 5 === 0 ? 0 : (seed % 4) + (i < 30 ? 1 : 0);
+      days.push({ date: dateStr, count, amount: count * 10 });
+    }
+    return days;
+  }, []);
+
   const handlePresetChange = (p: Preset) => {
     setPreset(p);
     setShowCustom(p === 'custom');
@@ -283,6 +301,12 @@ export default function AnalyticsDashboard() {
 
         {/* Summary KPI cards */}
         <AnalyticsSummaryCards summary={summary} />
+
+        {/* Contribution calendar heatmap */}
+        <ContributionCalendarHeatmap
+          contributions={heatmapContributions}
+          title="Member Contribution Activity"
+        />
 
         {/* Contribution trends + Member growth */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

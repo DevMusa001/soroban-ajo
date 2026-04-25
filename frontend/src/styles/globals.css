@@ -273,6 +273,48 @@ body {
     @apply bg-gray-200 dark:bg-gray-700 animate-pulse;
   }
 
+  /* Shimmer skeleton variant */
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .skeleton-shimmer {
+    @apply relative overflow-hidden bg-gray-200 dark:bg-gray-700;
+  }
+
+  .skeleton-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 100%
+    );
+    animation: shimmer 1.5s infinite;
+  }
+
+  .dark .skeleton-shimmer::after {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      transparent 100%
+    );
+  }
+
+  /* Reduced motion: fall back to pulse */
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-shimmer::after {
+      animation: none;
+    }
+    .skeleton-shimmer {
+      @apply animate-pulse;
+    }
+  }
+
   /* Truncate Multi-line */
   .line-clamp-2 {
     display: -webkit-box;
