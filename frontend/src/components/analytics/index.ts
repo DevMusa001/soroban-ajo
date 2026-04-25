@@ -3,3 +3,7 @@ export { ContributionTrendChart } from './ContributionTrendChart';
 export { GroupPerformanceChart } from './GroupPerformanceChart';
 export { MemberGrowthChart } from './MemberGrowthChart';
 export { TopContributorsTable } from './TopContributorsTable';
+// Issue #600 — interactive charts
+export { InteractiveGroupPerformanceChart } from './InteractiveGroupPerformanceChart';
+export { InteractiveContributionTrendChart } from './InteractiveContributionTrendChart';
+export { AnalyticsDashboard } from './AnalyticsDashboard';
