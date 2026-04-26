@@ -1,4 +1,5 @@
 import React from 'react'
+import Link from 'next/link'
 
 interface GroupHeaderProps {
   groupId: string
@@ -49,6 +50,15 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
             <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${statusColor}`}>
               {isLoading ? '...' : status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
+            <Link
+              href={`dashboard`}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition-colors border border-white/10"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+              </svg>
+              Dashboard
+            </Link>
             {onInvite && (
               <button
                 onClick={onInvite}

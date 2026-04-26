@@ -24,6 +24,7 @@ Cargo.lock
 
 # Node & Next.js
 node_modules/
+package-lock.json/
 npm-debug.log
 yarn-error.log
 dist/
@@ -72,3 +73,4 @@ Thumbs.db
 .kiro/
 !.kiro/specs/
 .vercel
+.codex
